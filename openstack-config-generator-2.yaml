@@ -1,0 +1,19 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackConfigGenerator
+metadata:
+  name: default
+  namespace: openstack
+spec:
+  enableFencing: false
+  ephemeralHeatSettings:
+    heatAPIImageURL: registry.redhat.io/rhosp-rhel9/openstack-heat-api:17.0.1
+    heatEngineImageURL: registry.redhat.io/rhosp-rhel9/openstack-heat-engine:17.0.1
+    heatEngineReplicas: 3
+    mariadbImageURL: registry.redhat.io/rhosp-rhel9/openstack-mariadb:17.0.1
+    rabbitImageURL: registry.redhat.io/rhosp-rhel9/openstack-rabbitmq:17.0.1
+  gitSecret: git-secret
+  heatEnvConfigMap: heat-env-config-3
+  imageURL: registry.redhat.io/rhosp-rhel9/openstack-tripleoclient:17.0.1
+  interactive: false
+  tarballConfigMap: tripleo-tarball-config-3
+

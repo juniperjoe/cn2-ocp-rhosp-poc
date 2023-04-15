@@ -1,0 +1,9 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackDeploy
+metadata:
+  name: default
+  namespace: openstack
+spec:
+  configVersion: n657h557hdch599h5fh699h586h688h77h5cbh56chb5h5bh584h65fh644h598h96h5fdh54fh5d9hbchfhd6hbch5ffh569hcfh57dh68bhc6hc9q 
+  configGenerator: default
+

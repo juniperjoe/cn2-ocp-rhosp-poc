@@ -1,0 +1,49 @@
+apiVersion: osp-director.openstack.org/v1beta2
+kind: OpenStackControlPlane
+metadata:
+  labels:
+    ooo-subnetname/ctlplane: "true"
+    ooo-subnetname/external: "true"
+    ooo-subnetname/internal_api: "true"
+    ooo-subnetname/storage: "true"
+    ooo-subnetname/storage_mgmt: "true"
+    osnetconfig-ref: openstacknetconfig
+  name: overcloud
+  namespace: openstack
+spec:
+  additionalServiceVIPs:
+    OVNDBs: internal_api
+    Redis: internal_api
+  openStackClientImageURL: registry.redhat.io/rhosp-rhel9/openstack-tripleoclient:17.0.1
+  openStackClientNetworks:
+  - ctlplane
+  - internal_api
+  - external
+  openStackClientStorageClass: hostpath-csi
+  openStackRelease: "17.0"
+  passwordSecret: userpassword
+  virtualMachineRoles:
+    Controller:
+      blockMultiQueue: false
+      cores: 12
+      ctlplaneInterface: eth1
+      isTripleoRole: true
+      memory: 64
+      networks:
+      - ctlplane
+      - internal_api
+      - external
+      - tenant
+      - storage
+      - storage_mgmt
+      roleCount: 1
+      roleName: Controller
+      rootDisk:
+        baseImageVolumeName: openstack-base-img
+        dedicatedIOThread: false
+        diskSize: 60
+        name: ""
+        storageAccessMode: ReadWriteOnce
+        storageClass: hostpath-csi
+        storageVolumeMode: Filesystem
+

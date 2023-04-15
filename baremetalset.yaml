@@ -1,0 +1,28 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackBaremetalSet
+metadata:
+  name: compute
+  namespace: openstack
+spec:
+  baseImageUrl: http://192.168.202.1/rhel-baseos-9.0-x86_64-kvm.qcow2
+  count: 1
+  ctlplaneInterface: eth2
+  deploymentSSHSecret: osp-controlplane-ssh-keys
+  hardwareReqs:
+    cpuReqs:
+      countReq: {}
+      mhzReq: {}
+    diskReqs:
+      gbReq: {}
+      ssdReq: {}
+    memReqs:
+      gbReq: {}
+  networks:
+  - ctlplane
+  - internal_api
+  - tenant
+  - storage
+  passwordSecret: userpassword
+  provisionServerName: openstack-provision-server
+  roleName: Compute
+

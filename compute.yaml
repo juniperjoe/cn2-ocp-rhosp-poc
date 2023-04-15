@@ -1,0 +1,38 @@
+apiVersion: v1
+data:
+  password: YzBudHJhaWwxMjM=
+  username: aXBtaWFkbWlu
+kind: Secret
+metadata:
+  name: compute-5a5s12-node3-bmc-secret
+  namespace: openshift-machine-api
+type: Opaque
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: compute-5a5s12-node3
+  namespace: openshift-machine-api
+spec:
+  automatedCleaningMode: metadata
+  bmc:
+    address: ipmi://10.84.138.23
+    credentialsName: compute-5a5s12-node3-bmc-secret
+    disableCertificateVerification: true
+  bootMACAddress: ac:1f:6b:2d:66:60
+  bootMode: legacy
+  consumerRef:
+    kind: OpenStackBaremetalSet
+    name: compute
+    namespace: openstack
+  image:
+    checksum: http://192.168.202.13:8080/images/rhel-baseos-9.0-x86_64-kvm.qcow2/compressed-rhel-baseos-9.0-x86_64-kvm.qcow2.md5sum
+    url: http://192.168.202.13:8080/images/rhel-baseos-9.0-x86_64-kvm.qcow2/compressed-rhel-baseos-9.0-x86_64-kvm.qcow2
+  networkData:
+    name: compute-cloudinit-networkdata-compute-5a5s12-node3
+    namespace: openshift-machine-api
+  online: true
+  userData:
+    name: compute-cloudinit-userdata-compute-5a5s12-node3
+    namespace: openshift-machine-api
+
