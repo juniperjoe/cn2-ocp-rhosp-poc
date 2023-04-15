@@ -1,0 +1,13 @@
+parameter_defaults:
+  NtpServer:
+    - anyntp.juniper.net
+  DnsServers:
+    - 10.84.5.101
+    - 172.29.143.60
+  AdminPassword: c0ntrail123
+  ComputeNetworkConfigTemplate: net-compute.j2
+  ContainerImageRegistryCredentials:
+    registry.redhat.io:
+     "6963238|rhosp-17-test": eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiJkZmQwMzg2NTBiMDA0ZmE0ODhiNzRlZmUyOTkxYWU3MCJ9.tsn_BD8nbz3ZhDHdfrCH0sjuRPKyDHt4VQ_ihWHvNa9g271rVFq-UEDCCG2JYNMik49nxUygHpOBdM_-PTg31vtlx0IJa0CRT77y_pgg7x8VBOvEZbfl77LucBigoDFRWkwr-g5zWjytkGa8y1Qemyr3XS9SJw99e5E6LNCGMhPTMK7xfXs7WaJSUlk-j6jTq4CEglRAOnOJurBrCtvMoZGR5V-kpxe1rWBVXdsAKJJKAMYj06KaYgWJJnK6U9fApIa4ES5ZmRx4-Gi5WszrKbeWSz8kUTWj1JtiRdfuX39jgcJzKan6hIvvC2IKpymryO-IptPmyf57_I4BEvb9H5FMfMw88cbo_5IrvSUfb9E89m7rT0lGcGShKNlA_si8A7Ow2Qwz2hjD1kjrhnC0SqK86kIvpFvu57HbZoISw5EZNm3eMFdl6nykkFv6fgdDlZD-BUpbO1dMM5Ph4K88CArPtmYrsIkT5Y9ppnLERfNgWO4b7WnYH886tejKAxcxQ4hZt77vc9q6EtpqZojNSyVG78V2a4vp77OGWMvl5F3-Cz95kASZsD_QYjI4tKxFNKCZERRkfFyRIH0wbsbd6rLkMwfy5gd1xRFTGXCZktt9eszFJGsUrguLzMjgZSOPJY2PHV6qSZTnNIl7R44aPzgYX_AeKGazzvey5bN3HR4
+  ContainerImageRegistryLogin: true
+

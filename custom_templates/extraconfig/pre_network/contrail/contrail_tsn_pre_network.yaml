@@ -1,0 +1,180 @@
+heat_template_version: rocky
+
+# NOTE: You don't need to pass the parameter explicitly from the
+# parent template, it can be specified via the parameter_defaults
+# in the resource_registry instead, if you want to override the default
+# and/or share values with other templates in the tree.
+parameters:
+  RoleParameters:
+    type: json
+    description: Role Specific parameters
+    default: {}
+  ServiceNames:
+    type: comma_delimited_list
+    default: []
+  deployment_actions:
+    default: ['CREATE']
+    type: comma_delimited_list
+    description: >
+      List of stack actions that will trigger any deployments in this
+      templates. The actions will be an empty list of the server is in the
+      toplevel DeploymentServerBlacklist parameter's value.
+  server:
+    type: string
+  ContrailVrouterModuleOptions:
+    default: ''
+    description: >
+      Vrouter kernel module options.
+      This string is passed to agent container as env variable VROUTER_MODULE_OPTIONS
+      (by a chance if vrouter module is loaded by container) and
+      it is saved as options in /etc/modprobe.d/vrouter.conf for a case
+      when vrouter is loaded by ifup scripts called by os-collect-config from host.
+      E.g. vr_mpls_labels=196000 vr_nexthops=521000 vr_vrfs=65536 vr_bridge_entries=1000000
+    type: string
+  DockerContrailVrouterKernelInitImageName:
+    description: image
+    type: string
+    default: "contrail-vrouter-kernel-init"
+  DockerContrailVrouterAgentContainerName:
+    description: image
+    type: string
+    default: "contrail-vrouter-agent"
+  DockerContrailVrouterPluginInitImageName:
+    description: >
+      Vrouter plugin init container image name.
+      It is a name of the vrouter plugin init image. It is
+      for cases when third-party HW requires specific drivers to be installed.
+      E.g. Mellanox requries some drivers on host to be installed.
+      For Mellanox the image name is contrail-vrouter-plugin-mellanox-init-redhat
+    type: string
+    default: ''
+  DockerInsecureRegistryAddress:
+    description: Optional. The IP Address and Port of an insecure docker
+                 namespace that will be configured in /etc/sysconfig/docker.
+                 The value can be multiple addresses separated by commas.
+    type: comma_delimited_list
+    default: []
+  ContrailImageTag:
+    default: 'latest'
+    description: Contrail container image tag
+    type: string
+  ContrailRegistryUser:
+    default: ''
+    description: Contrail Registry Username
+    type: string
+  ContrailRegistryPassword:
+    default: ''
+    description: Contrail Registry Password
+    type: string
+  NodeDataLookup:
+    type: json
+    default: {}
+    description: json string containing per-node configuration map
+  ContrailSettings:
+    default: {}
+    description: Contrail Service settings
+    type: json
+    tags:
+      - role_specific
+
+description: >
+  This template installs the Contrail kernel module  packages in order
+  to bring vhost0 interface up. Vhost0 interface must be up before
+  os-net-config takes over.
+
+conditions:
+  deployment_actions_empty:
+    equals:
+      - {get_param: deployment_actions}
+      - []
+
+resources:
+  DockerContrailVrouterKernelImageNormalize:
+    type: ../../../tools/contrail/contrail-image-normalize.yaml
+    properties:
+      GenericImageName: {get_param: DockerContrailVrouterKernelInitImageName}
+
+  DockerContrailVrouterPluginInitImageNormalize:
+    type: ../../../tools/contrail/contrail-image-normalize.yaml
+    properties:
+      GenericImageName: {get_param: DockerContrailVrouterPluginInitImageName}
+
+  DockerContrailVrouterAgentImageNormalize:
+    type: ../../../tools/contrail/contrail-image-normalize.yaml
+    properties:
+      GenericImageName: {get_param: DockerContrailVrouterAgentContainerName}
+
+  ContrailSettingsRoleParametersValue:
+    type: OS::Heat::Value
+    properties:
+      type: json
+      value:
+        contrail_settings:
+          yaql:
+            expression: $.data.default.mergeWith($.data.overrides != null and $.data.overrides or dict())
+            data:
+              default: {get_param: ContrailSettings}
+              overrides: {get_param: [RoleParameters, ContrailSettings]}
+
+  VrouterContainerParametersConfig:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ansible
+      inputs:
+        - name: _NODEDATA_
+          type: Json
+        - name: _CONTRAIL_SETTINGS_
+          type: Json
+        - name: _CONTRAIL_VROUTER_INIT_IMAGE_
+        - name: _CONTRAIL_VROUTER_INIT_IMAGE_NAME_
+        - name: _CONTRAIL_VROUTER_MODULE_OPTS_
+        - name: _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_
+        - name: _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_
+        - name: _DOCKER_INSECURE_REGISTRIES_
+        - name: _CONTRAIL_REGISTRY_USER_
+        - name: _CONTRAIL_REGISTRY_PASSWORD_
+      outputs:
+        - name: result
+      config:
+        get_file: contrail_ansible_container_config.yaml
+
+  VrouterContainerParametersDeployment:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      name: VrouterContainerParametersDeployment
+      server:  {get_param: server}
+      config: {get_resource: VrouterContainerParametersConfig}
+      actions:
+        if:
+          - deployment_actions_empty
+          - []
+          - ['CREATE', 'UPDATE']
+      input_values:
+        _NODEDATA_: {get_param: NodeDataLookup}
+        _CONTRAIL_SETTINGS_: {get_attr: [ContrailSettingsRoleParametersValue, value, contrail_settings]}
+        _CONTRAIL_VROUTER_INIT_IMAGE_: {get_attr: [DockerContrailVrouterKernelImageNormalize, contrail_image]}
+        _CONTRAIL_VROUTER_INIT_IMAGE_NAME_: {get_attr: [DockerContrailVrouterKernelImageNormalize, contrail_image_only]}
+        _CONTRAIL_VROUTER_MODULE_OPTS_: {get_param: ContrailVrouterModuleOptions}
+        _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_: {get_attr: [DockerContrailVrouterPluginInitImageNormalize, contrail_image]}
+        _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_: {get_attr: [DockerContrailVrouterPluginInitImageNormalize, contrail_image_only]}
+        _DOCKER_INSECURE_REGISTRIES_: {get_param: DockerInsecureRegistryAddress}
+        _CONTRAIL_REGISTRY_USER_: {get_param: ContrailRegistryUser}
+        _CONTRAIL_REGISTRY_PASSWORD_: {get_param: ContrailRegistryPassword}
+    depends_on:
+      - DockerContrailVrouterPluginInitImageNormalize
+      - DockerContrailVrouterKernelImageNormalize
+      - DockerContrailVrouterAgentImageNormalize
+
+outputs:
+  result:
+    value:
+      get_attr: [VrouterContainerParametersDeployment, result]
+  stdout:
+    value:
+      get_attr: [VrouterContainerParametersDeployment, deploy_stdout]
+  stderr:
+    value:
+      get_attr: [VrouterContainerParametersDeployment, deploy_stderr]
+  status_code:
+    value:
+      get_attr: [VrouterContainerParametersDeployment, deploy_status_code]

@@ -1,0 +1,207 @@
+---
+- name: Call Contrail init container for compute/dpdk/tls nodes
+  connection: local
+  hosts: localhost
+  tasks:
+
+    - name: set container_cli if undefined
+      set_fact:
+        container_cli: "podman"
+      when: container_cli is not defined
+
+    - name: contrail settings
+      set_fact:
+        contrail_settings_env_vars: "{{ _CONTRAIL_SETTINGS_ | default({}) }}"
+
+    - name: update contrail settings if nodedata is provided
+      block:
+      - name: get system dmi code
+        shell: |
+          #!/bin/sh
+          dmidecode --s system-uuid | awk 'match($0, /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/) { print substr($0, RSTART, RLENGTH) }'
+        register: dmi
+
+      - name: set dmi fact
+        set_fact:
+          dmi_uuid: "{{ dmi.stdout }}"
+
+      - name: convert nodedata to json
+        set_fact:
+          nodedata_json: "{{ _NODEDATA_ | to_json(ensure_ascii=False) | from_json }}"
+
+      - name: set nodedata
+        set_fact:
+          nodedata: "{{ nodedata_json[dmi_uuid] }}"
+        when: nodedata_json[dmi_uuid] is defined
+
+      - name: update contrail settings with node data values
+        set_fact:
+          contrail_settings_env_vars: "{{ contrail_settings_env_vars | combine({item.key: item.value}) }}"
+        with_dict: "{{ nodedata['contrail_settings'] }}"
+        when:
+          - nodedata is defined
+          - nodedata['contrail_settings'] is defined
+
+      when: _NODEDATA_ is defined
+
+    - name: create /var/lib/contrail
+      file:
+        path: "/var/lib/contrail"
+        state: directory
+
+    - name: prepare /etc/modprobe.d/vrouter.conf
+      lineinfile:
+        dest: /etc/modprobe.d/vrouter.conf
+        regexp: "^options vrouter"
+        line: "options vrouter {{ _CONTRAIL_VROUTER_MODULE_OPTS_ }}"
+        create: yes
+      when: _CONTRAIL_VROUTER_MODULE_OPTS_ is defined and _CONTRAIL_VROUTER_MODULE_OPTS_ != ''
+
+    - name: contrail vrouter init registry
+      set_fact:
+        contrail_registry: "{{ _CONTRAIL_VROUTER_INIT_IMAGE_.split('/')[0] }}"
+
+    - name: Setup podman insecure registry
+      block:
+        - name: Detect podman configuration version
+          lineinfile:
+            dest: /etc/containers/registries.conf
+            line: '[[registry]]'
+            state: present
+          check_mode: yes
+          register: podman_v2_check
+
+        - debug:
+            msg: "podman configuration v2 detected"
+          when: not podman_v2_check.changed
+
+        - name: Setup podman insecure registry v2
+          blockinfile:
+            path: /etc/containers/registries.conf
+            block: |
+              [[registry]]
+              prefix = "{{ contrail_registry }}"
+              insecure = true
+              location = "{{ contrail_registry }}"
+          when:
+            - not podman_v2_check.changed
+
+        - debug:
+            msg: "podman configuration v2 not detected. Using v1"
+          when: podman_v2_check.changed
+
+        # - name: Setup podman insecure registry v1
+        #   ini_file:
+        #     path: /etc/containers/registries.conf
+        #     section: 'registries.insecure'
+        #     option: 'registries'
+        #     value: "[ '{{ contrail_registry }}' ]"
+        #   when:
+        #     - podman_v2_check.changed
+      when:
+        - contrail_registry is defined and contrail_registry != ""
+        - contrail_registry is defined and contrail_registry in _DOCKER_INSECURE_REGISTRIES_
+
+    - name: Login to registry
+      shell: >
+        podman login -u {{ _CONTRAIL_REGISTRY_USER_ }} -p {{ _CONTRAIL_REGISTRY_PASSWORD_ }} {{ contrail_registry }} --tls-verify=false
+      when:
+        - _CONTRAIL_REGISTRY_USER_ is defined
+        - _CONTRAIL_REGISTRY_PASSWORD_ is defined
+        - contrail_registry is defined
+        - _CONTRAIL_REGISTRY_USER_ != ""
+        - _CONTRAIL_REGISTRY_PASSWORD_ != ""
+        - contrail_registry != ""
+
+    - name: contrail vrouter plugin init container if exists
+      block:
+        - set_fact:
+            plugin_init_env_args: ''
+
+        - name: prepare podman env args
+          set_fact:
+            plugin_init_env_args: "{{ plugin_init_env_args }}  -e  {{ item.key}}='{{ item.value }}'"
+          loop: "{{ contrail_settings_env_vars | dict2items}}"
+
+        - name: remove contrail vrouter plugin init container if exists
+          shell: >
+            {{ container_cli }} container rm --force "{{ _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_ }}"
+          ignore_errors: yes
+
+        - name: create contrail vrouter plugin init container
+          shell: |
+            {{ container_cli }} run -t --network host --name "{{ _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_ }}" \
+              --privileged -v /lib/modules:/lib/modules -v /usr/src:/usr/src -v /var/lib:/var/lib \
+              -v /etc/sysconfig/network-scripts:/etc/sysconfig/network-scripts {{ plugin_init_env_args }} \
+              "{{ _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_ }}"
+      when:
+        - _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_ is defined and _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_NAME_ != ''
+        - _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_ is defined and _CONTRAIL_VROUTER_PLUGIN_INIT_IMAGE_ != ''
+
+    - name: start contrail dpdk init container
+      block:
+
+        - set_fact:
+              dpdk_init_env_args: ''
+
+        - name: prepare podman env args
+          set_fact:
+            dpdk_init_env_args: "{{ dpdk_init_env_args }}  -e  {{ item.key}}='{{ item.value }}'"
+          loop: "{{ contrail_settings_env_vars | dict2items}}"
+
+        - name: pull contrail vrouter dpdk agent container
+          shell: >
+            {{ container_cli }} pull "{{ _CONTRAIL_VROUTER_AGENT_DPDK_IMAGE_ }}"
+
+        - name: remove contrail dpdk init container if exists
+          shell: >
+            {{ container_cli }} container rm --force "{{ _CONTRAIL_VROUTER_INIT_IMAGE_NAME_ }}"
+          ignore_errors: yes
+
+        - name: create contrail dpdk init container
+          shell: |
+            {{ container_cli }} run  -t --network host --name {{ _CONTRAIL_VROUTER_INIT_IMAGE_NAME_ }} --privileged \
+              -v /dev:/dev -v /etc/sysconfig/network-scripts:/etc/sysconfig/network-scripts -v /lib/modules:/lib/modules -v /bin:/host/bin \
+              -e AGENT_MODE=dpdk -e KERNEL_INIT_VHOST0=false -e CONTRAIL_VROUTER_AGENT_DPDK_DOCKER_IMAGE={{ _CONTRAIL_VROUTER_AGENT_DPDK_IMAGE_ }} \
+              -e CONTRAIL_VROUTER_AGENT_DPDK_CONTAINER_NAME={{ _CONTRAIL_VROUTER_AGENT_DPDK_CONTAINER_NAME_ }} \
+              -e CONTRAIL_VROUTER_AGENT_CONTAINER_NAME=contrail_vrouter_agent \
+              -e DPDK_COMMAND_ADDITIONAL_ARGS="{{ _CONTRAIL_DPDK_COMMAND_ADDITIONAL_ARGS_ }}" \
+              {{ dpdk_init_env_args }} {{ _CONTRAIL_VROUTER_INIT_IMAGE_ }}
+      when: _IS_DPDK_ is defined and _IS_DPDK_ != ''
+
+    - name: start contrail vrouter init container
+      block:
+
+        - set_fact:
+            vrouter_init_env_vars:
+              CONTRAIL_VROUTER_AGENT_CONTAINER_NAME: contrail_vrouter_agent
+
+        - set_fact:
+            vrouter_init_env_vars: "{{ vrouter_init_env_vars | combine({item.key: item.value}) }}"
+          with_dict: "{{ contrail_settings_env_vars }}"
+          when: contrail_settings_env_vars is defined
+
+        - set_fact:
+            init_env_args: ''
+
+        - name: prepare podman env args
+          set_fact:
+            init_env_args: "{{ init_env_args }}  -e  {{ item.key}}='{{ item.value }}'"
+          loop: "{{ vrouter_init_env_vars | dict2items}}"
+
+        - name: remove contrail init container if exists
+          shell: >
+            {{ container_cli }} container rm --force "{{ _CONTRAIL_VROUTER_INIT_IMAGE_NAME_ }}"
+          ignore_errors: yes
+
+
+        - name: create vrouter init container
+          shell: |
+            {{ container_cli }} run -t --network host --name {{ _CONTRAIL_VROUTER_INIT_IMAGE_NAME_ }} --privileged \
+              -v /dev:/dev -v /etc/sysconfig/network-scripts:/etc/sysconfig/network-scripts \
+              -v /lib/modules:/lib/modules -v /bin:/host/bin \
+              {{ init_env_args }} {{ _CONTRAIL_VROUTER_INIT_IMAGE_ }}
+
+
+      when: _IS_DPDK_ is undefined or _IS_DPDK_ == ''
+
