@@ -24,6 +24,7 @@ parameters:
     type: string
     default: "contrail-openstack-neutron-init"
   DefaultPasswords:
+    # cn2-ocp-rhosp-poc
     default: {}
     type: json
   RoleName:
@@ -67,6 +68,7 @@ resources:
       EndpointMap: {get_param: EndpointMap}
       ServiceData: {get_param: ServiceData}
       ServiceNetMap: {get_param: ServiceNetMap}
+      # cn2-ocp-rhosp-poc
       #DefaultPasswords: {get_param: DefaultPasswords}
       RoleName: {get_param: RoleName}
       RoleParameters: {get_param: RoleParameters}
@@ -117,6 +119,7 @@ outputs:
             environment:
               get_attr: [ContrailBase, role_data, contrail_base_env]
             env_file:
+              # cn2-ocp-rhosp-poc
               "/etc/contrail/common_contrail.env"
 
       host_prep_tasks:

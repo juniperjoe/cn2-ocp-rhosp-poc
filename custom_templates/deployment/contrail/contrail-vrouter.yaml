@@ -152,6 +152,7 @@ outputs:
             environment:
               get_attr: [ContrailBase, role_data, contrail_base_env]
             env_file:
+              # cn2-ocp-rhosp-poc
               "/etc/contrail/common_contrail_vrouter.env"
         step_5:
           map_merge:
@@ -170,6 +171,7 @@ outputs:
                         - {get_attr: [ContrailBase, role_data, contrail_base_env]}
                         - {get_attr: [ContrailBase, role_data, contrail_defaults_env]}
                     env_file:
+                      # cn2-ocp-rhosp-poc
                       "/etc/contrail/common_contrail_vrouter.env"
                 - null
             - contrail_vrouter_agent_nodemgr:
@@ -188,6 +190,7 @@ outputs:
                 environment:
                   get_attr: [ContrailBase, role_data, contrail_base_env]
                 env_file:
+                  # cn2-ocp-rhosp-poc
                   "/etc/contrail/common_contrail_vrouter.env"
               contrail_vrouter_agent:
                 image: &contrail_vrouter_agent_image {get_attr: [DockerContrailVrouterAgentImageNormalize, contrail_image]}
@@ -210,9 +213,11 @@ outputs:
                     - VROUTER_MODULE_OPTIONS: {get_param: ContrailVrouterModuleOptions}
                       KERNEL_INIT_VHOST0:
                         yaql:
+                          # cn2-ocp-rhosp-poc alway set to true
                           expression: $.data.containsKey("L3MH_CIDR") and not $.data["L3MH_CIDR"].isEmpty() and "true" or "true"
                           data: {get_attr: [ContrailBase, role_data, contrail_settings]}
                 env_file:
+                  # cn2-ocp-rhosp-poc
                   "/etc/contrail/common_contrail_vrouter.env"
       host_prep_tasks:
         list_concat:

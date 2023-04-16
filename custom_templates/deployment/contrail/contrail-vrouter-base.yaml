@@ -244,6 +244,7 @@ outputs:
                     state: present
                     regexp: "HUGE_PAGES_DIR="
                     line: "HUGE_PAGES_DIR={{ hp_dir }}"
+                # cn2-ocp-rhosp-poc
                 - name: Concatenate vrouter env file with base env file
                   shell: "cat /etc/contrail/common_contrail.env /etc/contrail/common_vrouter.env > /etc/contrail/common_contrail_vrouter.env"
                   register: common_contrail_vrouter_file

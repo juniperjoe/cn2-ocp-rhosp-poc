@@ -38,6 +38,7 @@ parameter_defaults:
   ControllerCount: 1
   ContrailAioCount: 0
   ContrailOperator: 0
+  # cn2-ocp-rhosp-poc
   ContrailControllerCount: 0
   ContrailAnalyticsCount: 0
   ContrailAnalyticsDatabaseCount: 0
@@ -50,6 +51,7 @@ parameter_defaults:
 #    - 10.87.64.32:5000
 #    - 192.168.24.1:8787
 #  ContrailRegistry: satellite.englab.juniper.net:5443
+  # cn2-ocp-rhosp-poc
   ContrailRegistry: svl-artifactory.juniper.net/contrail-nightly
   ContrailImageTag: master-latest
 

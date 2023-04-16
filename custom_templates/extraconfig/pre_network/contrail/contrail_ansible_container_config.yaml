@@ -89,7 +89,7 @@
         - debug:
             msg: "podman configuration v2 not detected. Using v1"
           when: podman_v2_check.changed
-
+        # cn2-ocp-rhosp-poc
         # - name: Setup podman insecure registry v1
         #   ini_file:
         #     path: /etc/containers/registries.conf

@@ -466,6 +466,8 @@ outputs:
             - null
       contrail_nodemgr_volumes: &contrail_nodemgr_volumes
           - /var/run:/var/run
+          # cn2-ocp-rhosp-poc
+          # - /run/runc:/run/runc
           - /sys/fs/cgroup:/sys/fs/cgroup:ro
           - /sys/fs/selinux:/sys/fs/selinux
           - /var/lib/containers:/var/lib/containers:shared
@@ -575,6 +577,7 @@ outputs:
                 path: /tmp/contrail_container.cil
                 marker: "; {mark} ANSIBLE MANAGED BLOCK"
                 create: yes
+                # cn2-ocp-rhosp-poc removed openat from container_var_run_t, mount_var_run_t, var_t, var_lib_t, ssd_conf_t below
                 block: |
                   (block contrail_container
                   (allow chkpwd_t container_file_t (lnk_file (read)))

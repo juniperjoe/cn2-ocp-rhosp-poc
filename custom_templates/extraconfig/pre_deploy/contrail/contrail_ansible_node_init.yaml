@@ -72,6 +72,7 @@
           - /etc/sysctl.d:/etc/sysctl.d
           - /var/crashes:/var/crashes
           - /var/log/containers/contrail:/var/log/contrail
+          # cn2-ocp-rhosp-poc
           #- /var/run:/var/run
           - /tmp/:/tmp/
 
@@ -138,6 +139,7 @@
         msg: "podman configuration v2 not detected. Using v1"
       when: podman_v2_check.changed
 
+    # cn2-ocp-rhosp-poc
     # - name: Setup podman insecure registry v1
     #   ini_file:
     #     path: /etc/containers/registries.conf
