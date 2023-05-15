@@ -8,15 +8,6 @@ spec:
   count: 1
   ctlplaneInterface: eth2
   deploymentSSHSecret: osp-controlplane-ssh-keys
-  hardwareReqs:
-    cpuReqs:
-      countReq: {}
-      mhzReq: {}
-    diskReqs:
-      gbReq: {}
-      ssdReq: {}
-    memReqs:
-      gbReq: {}
   networks:
   - ctlplane
   - internal_api

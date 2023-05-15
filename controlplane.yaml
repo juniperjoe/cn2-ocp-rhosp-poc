@@ -1,49 +1,53 @@
 apiVersion: osp-director.openstack.org/v1beta2
 kind: OpenStackControlPlane
 metadata:
-  labels:
-    ooo-subnetname/ctlplane: "true"
-    ooo-subnetname/external: "true"
-    ooo-subnetname/internal_api: "true"
-    ooo-subnetname/storage: "true"
-    ooo-subnetname/storage_mgmt: "true"
-    osnetconfig-ref: openstacknetconfig
   name: overcloud
   namespace: openstack
 spec:
-  additionalServiceVIPs:
-    OVNDBs: internal_api
-    Redis: internal_api
-  openStackClientImageURL: registry.redhat.io/rhosp-rhel9/openstack-tripleoclient:17.0.1
+#  gitSecret: git-secret
+  openStackClientImageURL: registry.redhat.io/rhosp-rhel9/openstack-tripleoclient:17.0
   openStackClientNetworks:
-  - ctlplane
-  - internal_api
-  - external
+        - ctlplane
+        - internal_api
+        - external
   openStackClientStorageClass: hostpath-csi
-  openStackRelease: "17.0"
   passwordSecret: userpassword
+    #  caConfigMap: cacerts
   virtualMachineRoles:
     Controller:
-      blockMultiQueue: false
-      cores: 12
       ctlplaneInterface: eth1
-      isTripleoRole: true
-      memory: 64
-      networks:
-      - ctlplane
-      - internal_api
-      - external
-      - tenant
-      - storage
-      - storage_mgmt
-      roleCount: 1
       roleName: Controller
+      roleCount: 1
+      networks:
+        - ctlplane
+        - internal_api
+        - external
+        - tenant
+        - storage
+        - storage_mgmt
+      cores: 12
+      memory: 64
       rootDisk:
-        baseImageVolumeName: openstack-base-img
-        dedicatedIOThread: false
+        name: "my-root-disk"
         diskSize: 60
-        name: ""
-        storageAccessMode: ReadWriteOnce
+        baseImageVolumeName: openstack-base-img
+        # storageClass must support RWX to be able to live migrate VMs
         storageClass: hostpath-csi
+        storageAccessMode:  ReadWriteOnce
+        # When using OpenShift Virtualization with OpenShift Container Platform Container Storage,
+        # specify RBD block mode persistent volume claims (PVCs) when creating virtual machine disks.
+        # With virtual machine disks, RBD block mode volumes are more efficient and provide better
+        # performance than Ceph FS or RBD filesystem-mode PVCs.
+        # To specify RBD block mode PVCs, use the 'ocs-storagecluster-ceph-rbd' storage class and
+        # VolumeMode: Block.
         storageVolumeMode: Filesystem
+      # optional configure additional discs to be attached to the VMs,
+      # need to be configured manually inside the VMs where to be used.
+      #additionalDisks:
+      #  - name: datadisk
+      #    diskSize: 500
+      #    storageClass: host-nfs-storageclass
+      #    storageAccessMode:  ReadWriteMany
+      #    storageVolumeMode: Filesystem
+  openStackRelease: "17.0"
 

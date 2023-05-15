@@ -1,0 +1,24 @@
+apiVersion: v1
+data:
+  password: YzBudHJhaWwxMjM=
+  username: aXBtaWFkbWlu
+kind: Secret
+metadata:
+  name: compute-5a5s12-node3-bmc-secret
+  namespace: openshift-machine-api
+type: Opaque
+---
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: compute-5a5s12-node3
+  namespace: openshift-machine-api
+spec:
+  automatedCleaningMode: metadata
+  bmc:
+    address: ipmi://10.84.138.23
+    credentialsName: compute-5a5s12-node3-bmc-secret
+    disableCertificateVerification: true
+  bootMACAddress: ac:1f:6b:2d:66:60
+  bootMode: legacy
+  online: false

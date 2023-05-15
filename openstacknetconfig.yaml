@@ -1,0 +1,159 @@
+apiVersion: osp-director.openstack.org/v1beta1
+kind: OpenStackNetConfig
+metadata:
+  name: openstacknetconfig
+  namespace: openstack
+spec:
+  attachConfigurations:
+    br-osp:
+      nodeNetworkConfigurationPolicy:
+        nodeSelector:
+          node-role.kubernetes.io/worker: ""
+        desiredState:
+          interfaces:
+          - bridge:
+              options:
+                stp:
+                  enabled: false
+              port:
+              - name: ens2f0
+                #ipv4:
+                #  address:
+                #  - ip: 192.168.202.13
+                #    prefix-length: 24
+                #  dhcp: false
+                #  enabled: false
+            description: Linux bridge with ens2f0 as a port
+            name: br-osp
+            state: up
+            type: linux-bridge
+            mtu: 1500
+    br-tenant:
+      nodeNetworkConfigurationPolicy:
+        nodeSelector:
+          node-role.kubernetes.io/worker: ""
+        desiredState:
+          interfaces:
+          - bridge:
+              options:
+                stp:
+                  enabled: false
+              port:
+              - name: ens2f1
+            description: Linux bridge with ens2f1 as a port
+            name: br-tenant
+            state: up
+            type: linux-bridge
+            mtu: 1500
+    br-ex:
+      nodeNetworkConfigurationPolicy:
+        nodeSelector:
+          node-role.kubernetes.io/worker: ""
+        desiredState:
+          interfaces:
+          - bridge:
+              options:
+                stp:
+                  enabled: false
+              port:
+              - name: eno1
+            description: linux bridge with eno1 as a port
+            name: br-ex
+            state: up
+            type: linux-bridge
+            mtu: 1500
+  # DomainName of the OSP environment
+  domainName: rhosp.ocp-rhosp.lab.local
+  reservations:
+    controller-0:
+      ipReservations:
+        ctlplane: 192.168.202.100
+        internal_api: 172.20.20.100
+        external: 10.87.3.174
+        tenant: 172.19.19.100
+        storage: 172.18.18.100
+        storage_mgmt: 172.17.17.100
+    compute-0:
+      ipReservations:
+        ctlplane: 192.168.202.150
+        internal_api: 172.20.20.150
+        tenant: 172.19.19.150
+        storage: 172.18.18.150
+    openstackclient-0:
+      ipReservations:
+        ctlplane: 192.168.202.99
+        external: 10.87.3.180
+        internal_api: 172.20.20.99
+    controlplane:
+      ipReservations:
+        ctlplane: 192.168.202.250
+        external: 10.87.3.179
+        internal_api: 172.20.20.250
+        storage: 172.18.18.250
+        storage_mgmt: 172.17.17.250
+  networks:
+  - name: Control
+    nameLower: ctlplane
+    subnets:
+    - name: ctlplane
+      ipv4:
+        allocationEnd: 192.168.202.250
+        allocationStart: 192.168.202.200
+        cidr: 192.168.202.0/24
+        gateway: 192.168.202.1
+      attachConfiguration: br-osp
+  - name: InternalApi
+    nameLower: internal_api
+    mtu: 1350
+    subnets:
+    - name: internal_api
+      attachConfiguration: br-osp
+      vlan: 1501
+      ipv4:
+        allocationEnd: 172.20.20.250
+        allocationStart: 172.20.20.200
+        cidr: 172.20.20.0/24
+  - name: External
+    nameLower: external
+    subnets:
+    - name: external
+      ipv4:
+        allocationEnd: 10.87.3.240
+        allocationStart: 10.87.3.230
+        cidr: 10.87.3.128/25
+        gateway: 10.87.3.254
+      attachConfiguration: br-ex
+  - name: Storage
+    nameLower: storage
+    mtu: 1500
+    subnets:
+    - name: storage
+      ipv4:
+        allocationEnd: 172.18.18.250
+        allocationStart: 172.18.18.10
+        cidr: 172.18.18.0/24
+      vlan: 1502
+      attachConfiguration: br-osp
+  - name: StorageMgmt
+    nameLower: storage_mgmt
+    mtu: 1500
+    subnets:
+    - name: storage_mgmt
+      ipv4:
+        allocationEnd: 172.17.17.250
+        allocationStart: 172.17.17.10
+        cidr: 172.17.17.0/24
+      vlan: 1503
+      attachConfiguration: br-osp
+  - name: Tenant
+    nameLower: tenant
+    vip: False
+    mtu: 1500
+    subnets:
+    - name: tenant
+      ipv4:
+        allocationEnd: 172.19.19.250
+        allocationStart: 172.19.19.200
+        cidr: 172.19.19.0/24
+      attachConfiguration: br-tenant
+
