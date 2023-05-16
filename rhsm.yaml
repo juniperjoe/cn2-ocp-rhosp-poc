@@ -1,5 +1,5 @@
 ---
-- name Register Compute nodes
+- name: Register Compute nodes
   hosts: Compute
   become: yes
   vars:
