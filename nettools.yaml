@@ -1,0 +1,8 @@
+- name: Install net-tools
+  hosts: Controller
+  become: yes
+  tasks:
+    - name: install net-tools
+      shell: |
+        yum -y install net-tools
+

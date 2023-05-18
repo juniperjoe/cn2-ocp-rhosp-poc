@@ -3,6 +3,10 @@
   connection: local
   hosts: localhost
   tasks:
+    - name: install podman
+      shell: |
+        #!/bin/sh
+        yum -y install podman
     - name: set container_cli if undefined
       set_fact:
         container_cli: "podman"

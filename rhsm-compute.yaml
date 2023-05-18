@@ -16,7 +16,8 @@
         password: RTU7rzr!nbz3qjq_wft
         release: 9.0
         org_id: 6963238
-        pool_ids: 2c940595860349dd018616405ade5868
+        pool_ids: 2c940595860349dd018616405ade5860
+      ignore_errors: true
     - name: Enable repos
       command: "subscription-manager repos --enable {{ item }}"
       with_items: "{{ repos }}"

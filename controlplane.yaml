@@ -30,6 +30,7 @@ spec:
       rootDisk:
         name: "my-root-disk"
         diskSize: 60
+        #baseImageVolumeName: overcloud-full-img-1
         baseImageVolumeName: openstack-base-img
         # storageClass must support RWX to be able to live migrate VMs
         storageClass: hostpath-csi
