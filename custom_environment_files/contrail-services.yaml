@@ -53,12 +53,15 @@ parameter_defaults:
 #  ContrailRegistry: satellite.englab.juniper.net:5443
   # cn2-ocp-rhosp-poc
   ContrailRegistry: svl-artifactory.juniper.net/contrail-nightly
-  ContrailImageTag: master-latest
+  ContrailImageTag: ocp-rhosp-poc
 
   # Enable use of hugepages for vrouter agent
   # Note, enabling hugepages in OS kernel is done below via KernelArgs args.
   ContrailVrouterHugepages2MB: ''
   ContrailVrouterHugepages1GB: '2'
+
+  ContrailVrouterGateway: 172.19.19.100
+  ContrailControlNodes: 172.19.19.10,172.19.19.11,172.19.19.12
 
 # (to disable just put empty value '')
 # KernelArgs for nodes can be changed here
