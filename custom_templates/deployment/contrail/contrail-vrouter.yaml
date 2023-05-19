@@ -34,19 +34,6 @@ parameters:
       when vrouter is loaded by ifup scripts called by os-collect-config from host.
       E.g. vr_mpls_labels=196000 vr_nexthops=521000 vr_vrfs=65536 vr_bridge_entries=1000000
     type: string
-  # cn2-ocp-rhosp-poc
-  ContrailVrouterGateway:
-    default: ''
-    description: Vrouter Gateway
-    type: string
-  ContrailControlNodes:
-    default: ''
-    description: Control Nodes
-    type: string
-  ContrailCollectorServers:
-    default: ''
-    description: Collector Servers
-    type: string
   EndpointMap:
     default: {}
     description: Mapping of service endpoint -> protocol. Typically set
@@ -167,6 +154,9 @@ outputs:
             env_file:
               # cn2-ocp-rhosp-poc
               "/etc/contrail/common_contrail_vrouter.env"
+              # list_concat:
+              #   - {get_attr: [ContrailBase, role_data, contrail_base_env_file]}
+              #   - - *contrail_env_file
         step_5:
           map_merge:
             # - if:
@@ -230,12 +220,12 @@ outputs:
                           expression: $.data.containsKey("L3MH_CIDR") and not $.data["L3MH_CIDR"].isEmpty() and "true" or "true"
                           data: {get_attr: [ContrailBase, role_data, contrail_settings]}
                       # cn2-ocp-rhosp-poc
-                    - VROUTER_GATEWAY: {get_param: ContrailVrouterGateway}
-                    - CONTROL_NODES: {get_param: ContrailControlNodes}
-                    - COLLECTOR_SERVERS: {get_param: ContrailCollectorServers}
                 env_file:
                   # cn2-ocp-rhosp-poc
                   "/etc/contrail/common_contrail_vrouter.env"
+                  # list_concat:
+                  #   - {get_attr: [ContrailBase, role_data, contrail_base_env_file]}
+                  #   - - *contrail_env_file
       host_prep_tasks:
         list_concat:
           - {get_attr: [ContrailBase, role_data, contrail_host_prep_tasks_base]}

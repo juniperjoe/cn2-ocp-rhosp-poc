@@ -60,9 +60,6 @@ parameter_defaults:
   ContrailVrouterHugepages2MB: ''
   ContrailVrouterHugepages1GB: '2'
 
-  ContrailVrouterGateway: 172.19.19.100
-  ContrailControlNodes: 172.19.19.10,172.19.19.11,172.19.19.12
-
 # (to disable just put empty value '')
 # KernelArgs for nodes can be changed here
   ComputeParameters:
@@ -126,7 +123,7 @@ parameter_defaults:
     # cn2-ocp-rhosp-poc
     VROUTER_GATEWAY: 172.19.19.100
     CONTROL_NODES: 172.19.19.10,172.19.19.11,172.19.19.12
-    COLLECTOR_SERVERS: 172.19.19.10,172.19.19.11,172.19.19.12
+    COLLECTOR_SERVERS: ''
     # 16 bit BGP Autonomous System number for the cluster.
     BGP_ASN: 64512
     # Supported values are true/false. When true, system will automatically create BGP peering mesh with all control-nodes that have same BGP AS number as global AS number.
