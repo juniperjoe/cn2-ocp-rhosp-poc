@@ -3,6 +3,7 @@
   connection: local
   hosts: localhost
   tasks:
+    # cn2-ocp-rhosp-poc
     - name: install podman
       shell: |
         #!/bin/sh
