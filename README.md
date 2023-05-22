@@ -3,7 +3,7 @@
 The openstack portion of CN2 is deployed as follows. For now, the heat templates and all necessary 
 scripts are stored in https://github.com/juniperjoe/cn2-ocp-rhosp-poc. Check out this repo and execute from the top level. Some helpful shell scripts are provided.
 
-### Control and Compute Node Teardown
+### Phase 0 - Control and Compute Node Teardown
 
 ```
 kubectl delete openstackdeploy -nopenstack default
@@ -14,7 +14,7 @@ kubectl delete -f controlplane.yaml
 kubectl delete -f openstacknetconfig.yaml
 ```
 
-### Control and Compute Node Deployment - Phase1
+### Phase 1 - Start Base Deployment
 
 Start the deployment. Stop before a required patch explained below.
 
@@ -26,7 +26,7 @@ kubectl wait openstackcontrolplane -nopenstack overcloud --for=condition=Provisi
 kubectl apply -f compute-node3.yaml
 ```
 
-### Control and Compute Node Deployment - Phase2
+### Phase 2 - Patch br-osp IP Address
 
 Temporary patch is required for the time being. This needs to be resolved.
 
@@ -38,7 +38,7 @@ From localhost, log into node1, then into node2. Configure IP address on br-osp 
 [node2] sudo ip addr add 192.168.202.13/24 dev br-osp
 ```
 
-### Control and Compute Node Deployment - Phase3
+### Phase 3 - Finish Base Deployment
 
 Continue deployment after patch. At the end of this phase, the control and compute nodes
 will be ready for deployment of openstack/contrail playbooks.
@@ -54,7 +54,7 @@ sleep 60
 kubectl exec -it -nopenstack openstackclient -c openstackclient -- ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/rhsm-compute.yaml
 ```
 
-### Control and Compute Node Deployment - Phase4
+### Phase 4 - Deploy Playbooks
 
 Apply openstack/contrail playbooks
 
@@ -75,7 +75,7 @@ sleep 5
 kubectl logs -f -nopenstack job/deploy-openstack-default
 ```
 
-### Control and Compute Node Deployment - Verify
+### Phase 5 - Verify Deployment
 
 Verify that the deployment was successful by logging into the compute node and controller node.
 The contrail-vrouter-agent pod should be up on the compute node. Also, verify the XMPP 

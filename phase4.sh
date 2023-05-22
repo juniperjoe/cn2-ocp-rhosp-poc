@@ -14,7 +14,15 @@ kubectl delete openstackconfiggenerator default -nopenstack
 kubectl apply -f openstack-config-generator-2.yaml
 sleep 40
 kubectl logs -f -nopenstack job/generate-config-default
-source ./prepare_deploy.sh
+
+while [ "$(kubectl get openstackconfiggenerator -nopenstack default -o jsonpath='{.status.configHash}')" == "" ]; do
+   sleep 5
+   echo "Waiting for openstackconfiggenerator to be ready."
+done
+
+export CONFIG_HASH=$(kubectl get openstackconfiggenerator -nopenstack default -o jsonpath='{.status.configHash}')
+echo "CONFIG_HASH=$CONFIG_HASH"
+sed s/CONFIG_HASH/${CONFIG_HASH}/g deploy_template.tmpl > deploy.yaml
 
 kubectl delete openstackdeploy -nopenstack default
 
