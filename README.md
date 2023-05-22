@@ -46,7 +46,10 @@ will be ready for deployment of openstack/contrail playbooks.
 ```
 kubectl apply -f openstackprovisionserver.yaml
 kubectl apply -f baremetalset.yaml
-./getready.sh
+while [ "$(kubectl get baremetalhost -nopenshift-machine-api   compute-5a5s12-node3 -o jsonpath='{.status.provisioning.state}')" != "provisioned" ]; do
+   sleep 30
+   echo "Waiting for baremetalhost to be ready."
+done
 kubectl cp rhsm-controller.yaml -nopenstack -c openstackclient openstackclient:/home/cloud-admin
 kubectl cp rhsm-compute.yaml -nopenstack -c openstackclient openstackclient:/home/cloud-admin
 kubectl exec -it -nopenstack openstackclient -c openstackclient -- ansible-playbook -i /home/cloud-admin/ctlplane-ansible-inventory /home/cloud-admin/rhsm-controller.yaml
@@ -59,6 +62,13 @@ kubectl exec -it -nopenstack openstackclient -c openstackclient -- ansible-playb
 Apply openstack/contrail playbooks
 
 ```
+cd ~/cn2-ocp-rhosp-poc/custom_templates
+rm custom-config.tar.gz
+tar -cvzf custom-config.tar.gz *
+kubectl delete configmap tripleo-tarball-config-3 -n openstack
+kubectl create configmap tripleo-tarball-config-3 --from-file=custom-config.tar.gz -n openstack
+
+cd ~/cn2-ocp-rhosp-poc
 kubectl delete cm -nopenstack heat-env-config-3
 kubectl create configmap -n openstack heat-env-config-3 --from-file=./custom_environment_files/ --dry-run=client -o yaml | kubectl apply -f -
 
@@ -66,7 +76,15 @@ kubectl delete openstackconfiggenerator default -nopenstack
 kubectl apply -f openstack-config-generator-2.yaml
 sleep 40
 kubectl logs -f -nopenstack job/generate-config-default
-source ./prepare_deploy.sh
+
+while [ "$(kubectl get openstackconfiggenerator -nopenstack default -o jsonpath='{.status.configHash}')" == "" ]; do
+   sleep 5
+   echo "Waiting for openstackconfiggenerator to be ready."
+done
+
+export CONFIG_HASH=$(kubectl get openstackconfiggenerator -nopenstack default -o jsonpath='{.status.configHash}')
+echo "CONFIG_HASH=$CONFIG_HASH"
+sed s/CONFIG_HASH/${CONFIG_HASH}/g deploy_template.tmpl > deploy.yaml
 
 kubectl delete openstackdeploy -nopenstack default
 
