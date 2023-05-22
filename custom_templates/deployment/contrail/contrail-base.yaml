@@ -467,7 +467,7 @@ outputs:
       contrail_nodemgr_volumes: &contrail_nodemgr_volumes
           - /var/run:/var/run
           # cn2-ocp-rhosp-poc
-          # - /run/runc:/run/runc
+          - /run/runc:/run/runc
           - /sys/fs/cgroup:/sys/fs/cgroup:ro
           - /sys/fs/selinux:/sys/fs/selinux
           - /var/lib/containers:/var/lib/containers:shared
