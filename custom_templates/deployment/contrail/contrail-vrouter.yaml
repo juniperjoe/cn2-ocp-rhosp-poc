@@ -82,6 +82,16 @@ conditions:
             yaql:
               expression: $.data.split(".").select($.split("-")).flatten().where($.matches("^r[0-9]{4}$")).where(int($.substring(-4)) < 2001).any()
               data: {get_param: ContrailImageTag}
+        - not:
+            yaql:
+              expression: $.data.matches(".*ocp-rhosp-poc.*")
+              data: {get_param: ContrailImageTag}
+  # cn2-ocp-rhosp-poc
+  is_not_cn2:
+    not:
+      yaql:
+        expression: $.data.matches(".*ocp-rhosp-poc.*")
+        data: {get_param: ContrailImageTag}
 
 resources:
   DockerContrailVrouterAgentImageNormalize:
@@ -159,42 +169,47 @@ outputs:
               #   - - *contrail_env_file
         step_5:
           map_merge:
-            # - if:
-            #     - is_more_than_2001_or_latest
-            #     - contrail_vrouter_agent_provisioner:
-            #         image: {get_attr: [ContrailBase, role_data, contrail_provisioner_image_name]}
-            #         net: host
-            #         detach: true
-            #         user: root
-            #         restart: on-failure
-            #         volumes:
-            #           get_attr: [ContrailBase, role_data, contrail_base_volumes]
-            #         environment:
-            #           map_merge:
-            #             - {get_attr: [ContrailBase, role_data, contrail_base_env]}
-            #             - {get_attr: [ContrailBase, role_data, contrail_defaults_env]}
-            #         env_file:
-            #           # cn2-ocp-rhosp-poc
-            #           "/etc/contrail/common_contrail_vrouter.env"
-            #     - null
-            # - contrail_vrouter_agent_nodemgr:
-            #     image: {get_attr: [ContrailBase, role_data, contrail_nodemgr_image_name]}
-            #     net: host
-            #     pid: host
-            #     detach: true
-            #     user: root
-            #     privileged: true
-            #     restart: always
-            #     volumes:
-            #       list_concat:
-            #         - {get_attr: [ContrailBase, role_data, contrail_base_volumes]}
-            #         - {get_attr: [ContrailBase, role_data, contrail_nodemgr_volumes]}
-            #         - - /var/lib/contrail/loadbalancer:/var/lib/contrail/loadbalancer
-            #     environment:
-            #       get_attr: [ContrailBase, role_data, contrail_base_env]
-            #     env_file:
-            #       # cn2-ocp-rhosp-poc
-            #       "/etc/contrail/common_contrail_vrouter.env"
+            - if:
+                - is_more_than_2001_or_latest
+                - contrail_vrouter_agent_provisioner:
+                    image: {get_attr: [ContrailBase, role_data, contrail_provisioner_image_name]}
+                    net: host
+                    detach: true
+                    user: root
+                    restart: on-failure
+                    volumes:
+                      get_attr: [ContrailBase, role_data, contrail_base_volumes]
+                    environment:
+                      map_merge:
+                        - {get_attr: [ContrailBase, role_data, contrail_base_env]}
+                        - {get_attr: [ContrailBase, role_data, contrail_defaults_env]}
+                    env_file:
+                      # cn2-ocp-rhosp-poc
+                      "/etc/contrail/common_contrail_vrouter.env"
+                - null
+            - if:
+                # cn2-ocp-rhosp-poc
+                - is_not_cn2
+                - contrail_vrouter_agent_nodemgr:
+                    image: {get_attr: [ContrailBase, role_data, contrail_nodemgr_image_name]}
+                    net: host
+                    pid: host
+                    detach: true
+                    user: root
+                    privileged: true
+                    restart: always
+                    volumes:
+                      list_concat:
+                        - {get_attr: [ContrailBase, role_data, contrail_base_volumes]}
+                        - {get_attr: [ContrailBase, role_data, contrail_nodemgr_volumes]}
+                        - - /var/lib/contrail/loadbalancer:/var/lib/contrail/loadbalancer
+                    environment:
+                      get_attr: [ContrailBase, role_data, contrail_base_env]
+                    env_file:
+                      list_concat:
+                        - {get_attr: [ContrailBase, role_data, contrail_base_env_file]}
+                        - - *contrail_env_file
+                - null
             - contrail_vrouter_agent:
                 image: &contrail_vrouter_agent_image {get_attr: [DockerContrailVrouterAgentImageNormalize, contrail_image]}
                 net: host
