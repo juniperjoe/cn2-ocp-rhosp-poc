@@ -4,10 +4,10 @@
   hosts: localhost
   tasks:
     # cn2-ocp-rhosp-poc
-    - name: install podman
-      shell: |
-        #!/bin/sh
-        yum -y install podman
+    - name: install podman if not already present
+      yum:
+        name: "podman"
+        state: present
     - name: set container_cli if undefined
       set_fact:
         container_cli: "podman"
