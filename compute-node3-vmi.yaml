@@ -1,0 +1,19 @@
+apiVersion: core.contrail.juniper.net/v4
+kind: VirtualMachineInterface
+metadata:
+  annotations:
+    core.contrail.juniper.net/display-name: vhost0
+  name: compute-0-vhost0
+  namespace: contrail
+spec:
+  parent:
+    kind: VirtualRouter
+    name: compute-0
+    uid: cbd9489d-082d-4ccb-bd19-b3672a918ca5
+  virtualNetworkReference:
+    apiVersion: core.contrail.juniper.net/v4
+    kind: VirtualNetwork
+    name: ip-fabric
+    namespace: contrail
+    uid: 28b9a500-5914-42f1-ad1a-42dc28ec3a4e
+

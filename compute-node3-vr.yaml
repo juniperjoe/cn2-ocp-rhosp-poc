@@ -1,0 +1,15 @@
+apiVersion: core.contrail.juniper.net/v4
+kind: VirtualRouter
+metadata:
+  name: compute-0
+spec:
+  fqName:
+  - default-global-system-config
+  - compute-0
+  parent:
+    apiVersion: core.contrail.juniper.net/v4
+    kind: GlobalSystemConfig
+    name: default-global-system-config
+    uid: 8df6c86f-96d3-4d58-8ced-4f97d108348a
+  virtualRouterIPAddress: 172.19.19.150
+
